@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tech Stack Recommender — DecodeLabs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0E1116;
+    --surface: #171B23;
+    --surface-2: #1F2530;
+    --border: #2A3140;
+    --gold: #E3A008;
+    --gold-soft: rgba(227, 160, 8, 0.14);
+    --teal: #16A394;
+    --teal-soft: rgba(22, 163, 148, 0.14);
+    --text: #F5F3EE;
+    --text-muted: #8B93A1;
+    --text-dim: #565E6D;
+    --radius: 14px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    padding: 64px 24px 96px;
+    background-image:
+      radial-gradient(circle at 12% 8%, rgba(227,160,8,0.07), transparent 40%),
+      radial-gradient(circle at 88% 92%, rgba(22,163,148,0.08), transparent 40%);
+  }
+
+  .wrap { max-width: 960px; margin: 0 auto; }
+
+  /* ---------- Header ---------- */
+  .eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--gold);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 20px;
+    height: 1px;
+    background: var(--gold);
+  }
+
+  h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: clamp(34px, 5vw, 52px);
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+    max-width: 720px;
+  }
+  h1 span { color: var(--teal); }
+
+  .subhead {
+    margin-top: 18px;
+    color: var(--text-muted);
+    font-size: 17px;
+    max-width: 560px;
+    line-height: 1.6;
+  }
+
+  /* ---------- Input card ---------- */
+  .panel {
+    margin-top: 48px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+  }
+
+  .panel-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 14px;
+  }
+
+  .chip-field {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    min-height: 52px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+  }
+  .chip-field:focus-within { border-color: var(--gold); }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--gold-soft);
+    color: var(--gold);
+    border: 1px solid rgba(227,160,8,0.35);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    padding: 6px 8px 6px 12px;
+    border-radius: 999px;
+  }
+  .chip button {
+    background: none;
+    border: none;
+    color: var(--gold);
+    opacity: 0.7;
+    cursor: pointer;
+    font-size: 15px;
+    line-height: 1;
+    padding: 2px;
+  }
+  .chip button:hover { opacity: 1; }
+
+  #skillInput {
+    flex: 1;
+    min-width: 160px;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    padding: 6px 4px;
+  }
+  #skillInput::placeholder { color: var(--text-dim); }
+
+  .hint {
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+  .hint.warn { color: var(--gold); }
+
+  .suggestions {
+    margin-top: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .suggestion-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+    border: 1px dashed var(--border);
+    border-radius: 999px;
+    padding: 5px 12px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .suggestion-tag:hover { border-color: var(--teal); color: var(--teal); }
+
+  .analyze-btn {
+    margin-top: 28px;
+    width: 100%;
+    background: var(--gold);
+    color: #14110A;
+    border: none;
+    border-radius: 10px;
+    padding: 15px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+  }
+  .analyze-btn:hover { box-shadow: 0 8px 24px rgba(227,160,8,0.25); transform: translateY(-1px); }
+  .analyze-btn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; transform: none; }
+
+  /* ---------- Results section ---------- */
+  .results {
+    margin-top: 56px;
+    display: none;
+  }
+  .results.visible { display: block; animation: fadeUp 0.5s ease; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+  .results-header h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 24px;
+    font-weight: 600;
+  }
+  .results-meta {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  /* ---------- Match Compass (signature element) ---------- */
+  .compass-row {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 40px;
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    margin-bottom: 28px;
+  }
+
+  .compass-wrap { position: relative; width: 200px; height: 200px; margin: 0 auto; }
+  .compass-wrap svg { width: 100%; height: 100%; overflow: visible; }
+
+  .compass-needle {
+    transform-origin: 100px 100px;
+    transition: transform 1.1s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .compass-center-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    pointer-events: none;
+  }
+  .compass-pct {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--teal);
+  }
+  .compass-caption {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+
+  .compass-info .eyebrow { margin-bottom: 12px; }
+  .compass-info h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .compass-info p {
+    margin-top: 10px;
+    color: var(--text-muted);
+    font-size: 14.5px;
+    line-height: 1.6;
+    max-width: 480px;
+  }
+
+  /* ---------- Ranked list ---------- */
+  .match-list { display: flex; flex-direction: column; gap: 14px; }
+
+  .match-row {
+    display: grid;
+    grid-template-columns: 40px 1fr 90px;
+    align-items: center;
+    gap: 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 22px;
+  }
+
+  .rank-badge {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--text-dim);
+  }
+  .match-row:nth-child(1) .rank-badge { color: var(--gold); }
+
+  .match-title { font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 16px; }
+
+  .match-bar-track {
+    margin-top: 8px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--surface-2);
+    overflow: hidden;
+  }
+  .match-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--teal), var(--gold));
+    width: 0%;
+    transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .match-pct {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 15px;
+    text-align: right;
+    color: var(--teal);
+  }
+
+  footer {
+    max-width: 960px;
+    margin: 80px auto 0;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  @media (max-width: 640px) {
+    .compass-row { grid-template-columns: 1fr; text-align: center; }
+    .compass-info p { margin-left: auto; margin-right: auto; }
+    .match-row { grid-template-columns: 32px 1fr; }
+    .match-pct { grid-column: 2; text-align: left; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="eyebrow">DecodeLabs — Project 3</div>
+  <h1>Find the tech role your <span>skills already point to</span>.</h1>
+  <p class="subhead">
+    Enter what you know. This engine converts your skills into a weighted vector and
+    measures its angle against sixteen tech job roles using cosine similarity —
+    the closer the alignment, the stronger the match.
+  </p>
+
+  <div class="panel">
+    <div class="panel-label">Your skills</div>
+    <div class="chip-field" id="chipField">
+      <input type="text" id="skillInput" placeholder="Type a skill and press Enter…" autocomplete="off">
+    </div>
+    <div class="hint" id="hint">Add at least 3 skills to run the match.</div>
+    <div class="suggestions" id="suggestions"></div>
+    <button class="analyze-btn" id="analyzeBtn" disabled>Find my matches</button>
+  </div>
+
+  <div class="results" id="results">
+    <div class="results-header">
+      <h2>Your top career matches</h2>
+      <div class="results-meta" id="resultsMeta"></div>
+    </div>
+
+    <div class="compass-row">
+      <div class="compass-wrap">
+        <svg viewBox="0 0 200 200">
+          <circle cx="100" cy="100" r="88" fill="none" stroke="#2A3140" stroke-width="1"/>
+          <circle cx="100" cy="100" r="64" fill="none" stroke="#2A3140" stroke-width="1"/>
+          <circle cx="100" cy="100" r="40" fill="none" stroke="#2A3140" stroke-width="1"/>
+          <line x1="100" y1="12" x2="100" y2="188" stroke="#2A3140" stroke-width="1"/>
+          <line x1="12" y1="100" x2="188" y2="100" stroke="#2A3140" stroke-width="1"/>
+          <path d="M 100 100 L 100 20 A 80 80 0 0 1 180 100 Z" fill="rgba(22,163,148,0.07)"/>
+          <g class="compass-needle" id="needle">
+            <line x1="100" y1="100" x2="100" y2="24" stroke="#16A394" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="100" cy="100" r="6" fill="#16A394"/>
+          </g>
+        </svg>
+        <div class="compass-center-label">
+          <div class="compass-pct" id="compassPct">0%</div>
+          <div class="compass-caption">alignment</div>
+        </div>
+      </div>
+      <div class="compass-info">
+        <div class="eyebrow" style="margin-bottom:8px;">Best match</div>
+        <h3 id="bestJob">—</h3>
+        <p id="bestExplain">The needle position reflects cos(θ) between your skill vector and this role's vector — full alignment points straight up.</p>
+      </div>
+    </div>
+
+    <div class="match-list" id="matchList"></div>
+  </div>
+</div>
+
+<footer>
+  <span>Tech Stack Recommender — content-based filtering engine</span>
+  <span id="datasetInfo">16 roles loaded</span>
+</footer>
+
+<script>
+const JOBS = [
+  {
+    "job_role": "Data Scientist",
+    "skills": [
+      "Python",
+      "R",
+      "Machine Learning",
+      "Deep Learning",
+      "TensorFlow",
+      "PyTorch",
+      "Statistics",
+      "NLP"
+    ]
+  },
+  {
+    "job_role": "Data Analyst",
+    "skills": [
+      "SQL",
+      "Power BI",
+      "Tableau",
+      "Python",
+      "R",
+      "Statistics",
+      "Data Visualization"
+    ]
+  },
+  {
+    "job_role": "Data Engineer",
+    "skills": [
+      "SQL",
+      "NoSQL",
+      "Spark",
+      "Hadoop",
+      "Airflow",
+      "Kafka",
+      "Python",
+      "Scala",
+      "Cloud Platforms"
+    ]
+  },
+  {
+    "job_role": "DevOps Engineer",
+    "skills": [
+      "CI/CD",
+      "Jenkins",
+      "GitLab",
+      "Infrastructure as Code",
+      "Docker",
+      "Kubernetes",
+      "Monitoring",
+      "AWS",
+      "Azure",
+      "GCP"
+    ]
+  },
+  {
+    "job_role": "Site Reliability Engineer",
+    "skills": [
+      "System Design",
+      "Monitoring",
+      "Alerting",
+      "Incident Management",
+      "Automation",
+      "Cloud Infrastructure"
+    ]
+  },
+  {
+    "job_role": "System and Network Administrator",
+    "skills": [
+      "Linux",
+      "Windows",
+      "Networking",
+      "Virtualization",
+      "Active Directory",
+      "Scripting"
+    ]
+  },
+  {
+    "job_role": "Cloud Developer",
+    "skills": [
+      "Python",
+      "Java",
+      "Node.js",
+      "Docker",
+      "Kubernetes",
+      "Microservices",
+      "REST API",
+      "AWS",
+      "Azure",
+      "GCP",
+      "CI/CD"
+    ]
+  },
+  {
+    "job_role": "Cloud Architect",
+    "skills": [
+      "AWS",
+      "Azure",
+      "GCP",
+      "Distributed Architecture",
+      "High Availability",
+      "Disaster Recovery",
+      "Cloud Security",
+      "IAM",
+      "Cost Optimization"
+    ]
+  },
+  {
+    "job_role": "Security Administrator",
+    "skills": [
+      "Active Directory",
+      "LDAP",
+      "IAM",
+      "Access Management",
+      "Audit",
+      "Compliance",
+      "PowerShell",
+      "Bash",
+      "SIEM",
+      "Splunk"
+    ]
+  },
+  {
+    "job_role": "Security Auditor",
+    "skills": [
+      "Burp Suite",
+      "Metasploit",
+      "Network Security",
+      "Web App Testing",
+      "Offensive Scripting",
+      "Vulnerability Reports",
+      "Penetration Testing"
+    ]
+  },
+  {
+    "job_role": "Cybersecurity Analyst",
+    "skills": [
+      "SIEM",
+      "Monitoring",
+      "Anomaly Detection",
+      "Incident Response",
+      "Threat Intelligence",
+      "Python Automation"
+    ]
+  },
+  {
+    "job_role": "Frontend Developer",
+    "skills": [
+      "HTML5",
+      "CSS3",
+      "React",
+      "Vue.js",
+      "Angular",
+      "JavaScript",
+      "TypeScript",
+      "Responsive Design",
+      "Web Performance"
+    ]
+  },
+  {
+    "job_role": "Backend Developer",
+    "skills": [
+      "Java",
+      "Python",
+      "Node.js",
+      "SQL",
+      "NoSQL",
+      "REST API",
+      "GraphQL",
+      "Microservices",
+      "Cloud Platforms"
+    ]
+  },
+  {
+    "job_role": "FullStack Developer",
+    "skills": [
+      "React",
+      "Vue",
+      "Node.js",
+      "Python",
+      "Databases",
+      "Docker",
+      "Cloud",
+      "End to End Development"
+    ]
+  },
+  {
+    "job_role": "Software Architect",
+    "skills": [
+      "Design Patterns",
+      "Layered Architecture",
+      "Microservices",
+      "System Design",
+      "Technical Mentoring"
+    ]
+  },
+  {
+    "job_role": "QA Engineer",
+    "skills": [
+      "Selenium",
+      "Cypress",
+      "Test Automation",
+      "Performance Testing",
+      "Test Frameworks",
+      "CI/CD"
+    ]
+  }
+];
+
+const SUGGESTIONS = ["Python", "Docker", "React", "SQL", "AWS", "Kubernetes", "Machine Learning", "JavaScript"];
+
+let userSkills = [];
+
+const chipField = document.getElementById('chipField');
+const skillInput = document.getElementById('skillInput');
+const hint = document.getElementById('hint');
+const analyzeBtn = document.getElementById('analyzeBtn');
+const suggestionsEl = document.getElementById('suggestions');
+
+function renderSuggestions() {
+  suggestionsEl.innerHTML = '';
+  SUGGESTIONS.filter(s => !userSkills.includes(s)).forEach(s => {
+    const tag = document.createElement('div');
+    tag.className = 'suggestion-tag';
+    tag.textContent = '+ ' + s;
+    tag.onclick = () => { addSkill(s); };
+    suggestionsEl.appendChild(tag);
+  });
+}
+
+function renderChips() {
+  chipField.querySelectorAll('.chip').forEach(c => c.remove());
+  userSkills.forEach((skill, i) => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.innerHTML = `<span>${skill}</span>`;
+    const btn = document.createElement('button');
+    btn.textContent = '×';
+    btn.onclick = () => { userSkills.splice(i, 1); renderChips(); renderSuggestions(); updateState(); };
+    chip.appendChild(btn);
+    chipField.insertBefore(chip, skillInput);
+  });
+}
+
+function updateState() {
+  const n = userSkills.length;
+  if (n < 3) {
+    hint.textContent = `Add at least 3 skills to run the match (${n}/3).`;
+    hint.classList.add('warn');
+    analyzeBtn.disabled = true;
+  } else {
+    hint.textContent = `${n} skills added. Ready to analyze.`;
+    hint.classList.remove('warn');
+    analyzeBtn.disabled = false;
+  }
+}
+
+function addSkill(raw) {
+  const skill = raw.trim();
+  if (!skill) return;
+  if (userSkills.some(s => s.toLowerCase() === skill.toLowerCase())) return;
+  userSkills.push(skill);
+  renderChips();
+  renderSuggestions();
+  updateState();
+}
+
+skillInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    addSkill(skillInput.value);
+    skillInput.value = '';
+  } else if (e.key === 'Backspace' && skillInput.value === '' && userSkills.length) {
+    userSkills.pop();
+    renderChips();
+    renderSuggestions();
+    updateState();
+  }
+});
+
+chipField.addEventListener('click', () => skillInput.focus());
+
+/* ---------------- TF-IDF + Cosine similarity engine ---------------- */
+
+function buildVocabulary(documents) {
+  const vocab = new Set();
+  documents.forEach(doc => doc.forEach(term => vocab.add(term)));
+  return Array.from(vocab).sort();
+}
+
+function computeTF(document, vocabulary) {
+  const total = document.length;
+  const tf = {};
+  vocabulary.forEach(term => {
+    const count = document.filter(t => t === term).length;
+    tf[term] = total > 0 ? count / total : 0;
+  });
+  return tf;
+}
+
+function computeIDF(documents, vocabulary) {
+  const nDocs = documents.length;
+  const idf = {};
+  vocabulary.forEach(term => {
+    const docsWithTerm = documents.filter(doc => doc.includes(term)).length;
+    idf[term] = Math.log(nDocs / (docsWithTerm + 1)) + 1;
+  });
+  return idf;
+}
+
+function buildTfidfVector(document, vocabulary, idf) {
+  const tf = computeTF(document, vocabulary);
+  return vocabulary.map(term => tf[term] * idf[term]);
+}
+
+function dotProduct(a, b) {
+  return a.reduce((sum, v, i) => sum + v * b[i], 0);
+}
+
+function magnitude(v) {
+  return Math.sqrt(v.reduce((sum, x) => sum + x * x, 0));
+}
+
+function cosineSimilarity(a, b) {
+  const magA = magnitude(a);
+  const magB = magnitude(b);
+  if (magA === 0 || magB === 0) return 0;
+  return dotProduct(a, b) / (magA * magB);
+}
+
+function runRecommendation() {
+  const allDocuments = JOBS.map(j => j.skills).concat([userSkills]);
+  const vocabulary = buildVocabulary(allDocuments);
+  const idf = computeIDF(allDocuments, vocabulary);
+  const userVector = buildTfidfVector(userSkills, vocabulary, idf);
+
+  const scores = JOBS.map(job => {
+    const jobVector = buildTfidfVector(job.skills, vocabulary, idf);
+    return { job_role: job.job_role, score: cosineSimilarity(userVector, jobVector) };
+  });
+
+  scores.sort((a, b) => b.score - a.score);
+  return { top3: scores.slice(0, 3), vocabSize: vocabulary.length };
+}
+
+/* ---------------- Rendering results ---------------- */
+
+const resultsEl = document.getElementById('results');
+const matchListEl = document.getElementById('matchList');
+const needle = document.getElementById('needle');
+const compassPct = document.getElementById('compassPct');
+const bestJob = document.getElementById('bestJob');
+const resultsMeta = document.getElementById('resultsMeta');
+
+analyzeBtn.addEventListener('click', () => {
+  const { top3, vocabSize } = runRecommendation();
+
+  resultsMeta.textContent = `Profile: ${userSkills.join(', ')} · ${JOBS.length} roles compared · ${vocabSize} unique skills`;
+
+  // Compass: rotate needle based on best score (0% => 90deg from top / no rotation baseline handled via angle math)
+  const best = top3[0];
+  const pct = Math.round(best.score * 100);
+  // angle: at score 1 needle points straight up (0deg rotation from vertical baseline which already points up)
+  // at score 0 needle points fully right (90deg rotation)
+  const angleDeg = (1 - best.score) * 90;
+  needle.style.transform = `rotate(${angleDeg}deg)`;
+  compassPct.textContent = pct + '%';
+  bestJob.textContent = best.job_role;
+
+  matchListEl.innerHTML = '';
+  top3.forEach((r, i) => {
+    const row = document.createElement('div');
+    row.className = 'match-row';
+    const rowPct = (r.score * 100).toFixed(1);
+    row.innerHTML = `
+      <div class="rank-badge">0${i + 1}</div>
+      <div>
+        <div class="match-title">${r.job_role}</div>
+        <div class="match-bar-track"><div class="match-bar-fill" data-pct="${rowPct}"></div></div>
+      </div>
+      <div class="match-pct">${rowPct}%</div>
+    `;
+    matchListEl.appendChild(row);
+  });
+
+  resultsEl.classList.add('visible');
+
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.match-bar-fill').forEach(bar => {
+      bar.style.width = bar.dataset.pct + '%';
+    });
+  });
+
+  resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
+document.getElementById('datasetInfo').textContent = `${JOBS.length} roles loaded`;
+renderSuggestions();
+updateState();
+</script>
+
+</body>
+</html>
